@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Andrino Project
+ * Copyright (C) 2014 Paweł Krawczyk
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,12 @@
  * the License.
  */
 
-package com.technotalkative.volleyexamplesimple;
+package com.krawczyk.lifesum.network;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONObject;
-
-import android.util.Base64;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Response.ErrorListener;
@@ -31,7 +29,7 @@ import com.android.volley.toolbox.JsonObjectRequest;
 /**
  * @class TokenRequest
  * @author Pawel Krawczyk
- * @since 20-05-2014
+ * @since 22-05-2014
  */
 public class TokenRequest extends JsonObjectRequest {
     public TokenRequest(int method, String url, JSONObject jsonRequest, Listener<JSONObject> listener, ErrorListener errorListener) {
