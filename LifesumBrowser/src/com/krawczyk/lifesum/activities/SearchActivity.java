@@ -16,39 +16,63 @@
 
 package com.krawczyk.lifesum.activities;
 
+import java.util.List;
+
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.Activity;
+import android.app.ListActivity;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
-import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
+import com.krawczyk.lifesum.DaoMaster;
+import com.krawczyk.lifesum.DaoMaster.DevOpenHelper;
+import com.krawczyk.lifesum.DaoSession;
+import com.krawczyk.lifesum.Food;
+import com.krawczyk.lifesum.FoodDao;
+import com.krawczyk.lifesum.R;
+import com.krawczyk.lifesum.network.JsonHelper;
 import com.krawczyk.lifesum.network.TokenRequest;
-import com.technotalkative.volleyexamplesimple.R;
+import com.krawczyk.lifesum.views.adapters.FoodItemAdapter;
 
 /**
  * @class SearchActivity
  * @author Pawel Krawczyk
  * @since 22-05-2014
  */
-public class SearchActivity extends Activity {
+public class SearchActivity extends ListActivity {
 
-    private TextView txtDisplay;
+    private SQLiteDatabase mSQLiteDatabase;
+
+    private DaoMaster mDaoMaster;
+
+    private DaoSession mDaoSession;
+
+    private FoodDao mFoodDao;
+
+    private Cursor mCursor;
+
+    private List<Food> mSearchResultList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        initializeDao();
+        addUiListeners();
+        downloadData();
+    }
 
-        txtDisplay = (TextView) findViewById(R.id.txtDisplay);
-
+    private void downloadData() {
         RequestQueue queue = Volley.newRequestQueue(this);
         String url = "https://api.lifesum.com/v1/search/query?type=food&search=cola";
 
@@ -56,19 +80,35 @@ public class SearchActivity extends Activity {
 
             @Override
             public void onResponse(JSONObject response) {
-                txtDisplay.setText("Response => " + response.toString());
+                Log.i("Lifesum", response.toString());
                 findViewById(R.id.progressBar1).setVisibility(View.GONE);
+                try {
+                    JSONObject quizObject = (JSONObject) response.get("response");
+                    String list = quizObject.optString("list");
+                    mSearchResultList = JsonHelper.deserializeFoodList(list);
+                    FoodItemAdapter adapter = new FoodItemAdapter(SearchActivity.this, mSearchResultList);
+                    setListAdapter(adapter);
+                } catch (JSONException e) {
+                    Log.e("e", "", e);
+                }
             }
         }, new Response.ErrorListener() {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.e("TEST", error.getMessage());
-                txtDisplay.setText("Error => " + error.getLocalizedMessage());
+                Log.i("Lifesum", error.getMessage());
                 findViewById(R.id.progressBar1).setVisibility(View.GONE);
             }
         });
         queue.add(jsObjRequest);
+    }
+
+    private void initializeDao() {
+        DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
+        mSQLiteDatabase = helper.getWritableDatabase();
+        mDaoMaster = new DaoMaster(mSQLiteDatabase);
+        mDaoSession = mDaoMaster.newSession();
+        mFoodDao = mDaoSession.getFoodDao();
     }
 
     @Override
@@ -76,4 +116,8 @@ public class SearchActivity extends Activity {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
+    protected void addUiListeners() {
+    }
+
 }
