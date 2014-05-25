@@ -16,18 +16,30 @@
 
 package com.krawczyk.lifesum.activities;
 
+import it.gmariotti.cardslib.demo.Utils;
+
 import java.util.List;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.app.ListActivity;
-import android.database.Cursor;
+import android.app.Activity;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -42,14 +54,33 @@ import com.krawczyk.lifesum.FoodDao;
 import com.krawczyk.lifesum.R;
 import com.krawczyk.lifesum.network.JsonHelper;
 import com.krawczyk.lifesum.network.TokenRequest;
-import com.krawczyk.lifesum.views.adapters.FoodItemAdapter;
+import com.krawczyk.lifesum.views.adapters.BaseFragment;
+import com.krawczyk.lifesum.views.adapters.StoredFragment;
 
 /**
  * @class SearchActivity
  * @author Pawel Krawczyk
  * @since 22-05-2014
  */
-public class SearchActivity extends ListActivity {
+public class SearchActivity extends Activity {
+
+    private List<Food> mSearchResultList;
+
+    private ListView mDrawerList;
+
+    private DrawerLayout mDrawer;
+
+    private CustomActionBarDrawerToggle mDrawerToggle;
+
+    private int mCurrentTitle = R.string.app_name;
+
+    private int mSelectedFragment;
+
+    private StoredFragment mBaseFragment;
+
+    protected ActionMode mActionMode;
+
+    private static String TAG = "Lifesum";
 
     private SQLiteDatabase mSQLiteDatabase;
 
@@ -59,17 +90,179 @@ public class SearchActivity extends ListActivity {
 
     private FoodDao mFoodDao;
 
-    private Cursor mCursor;
+    // Used in savedInstanceState
+    private static String BUNDLE_SELECTEDFRAGMENT = "BDL_SELFRG";
 
-    private List<Food> mSearchResultList;
+    private static final int SEARCH = 0;
+
+    private static final int STORED = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_search);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setHomeButtonEnabled(true);
         initializeDao();
         addUiListeners();
         downloadData();
+        initNavigationDrawer();
+        if (savedInstanceState != null) {
+            mSelectedFragment = savedInstanceState.getInt(BUNDLE_SELECTEDFRAGMENT);
+
+            FragmentManager fragmentManager = getFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            if (fragmentManager.findFragmentById(R.id.fragment_main) == null) {
+                mBaseFragment = selectFragment(mSelectedFragment);
+                mBaseFragment.setFoodDao(mFoodDao);
+            }
+            // if (mBaseFragment==null)
+            // mBaseFragment = selectFragment(mSelectedFragment);
+        } else {
+            mBaseFragment = new StoredFragment();
+            mBaseFragment.setFoodDao(mFoodDao);
+            openFragment(mBaseFragment);
+        }
+    }
+
+    private void initNavigationDrawer() {
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        _initMenu();
+        mDrawerToggle = new CustomActionBarDrawerToggle(this, mDrawer);
+        mDrawer.setDrawerListener(mDrawerToggle);
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    /* Called whenever we call invalidateOptionsMenu() */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content
+        // view
+        // boolean drawerOpen = mDrawer.isDrawerOpen(mDrawerList);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        /*
+         * The action bar home/up should open or close the drawer.
+         * ActionBarDrawerToggle will take care of this.
+         */
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private class CustomActionBarDrawerToggle extends ActionBarDrawerToggle {
+
+        public CustomActionBarDrawerToggle(Activity mActivity, DrawerLayout mDrawerLayout) {
+            super(mActivity, mDrawerLayout, R.drawable.ic_navigation_drawer, R.string.app_name, mCurrentTitle);
+        }
+
+        @Override
+        public void onDrawerClosed(View view) {
+            getActionBar().setTitle(getString(mCurrentTitle));
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+
+        @Override
+        public void onDrawerOpened(View drawerView) {
+            getActionBar().setTitle(getString(R.string.app_name));
+            invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+        }
+    }
+
+    private class DrawerItemClickListener implements ListView.OnItemClickListener {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            // Highlight the selected item, update the title, and close the
+            // drawer
+            // update selected item and title, then close the drawer
+            mDrawerList.setItemChecked(position, true);
+            mBaseFragment = selectFragment(position);
+            mSelectedFragment = position;
+
+            if (mBaseFragment != null)
+                openFragment(mBaseFragment);
+            mDrawer.closeDrawer(mDrawerList);
+        }
+    }
+
+    private void initializeDao() {
+        DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
+        mSQLiteDatabase = helper.getWritableDatabase();
+        mDaoMaster = new DaoMaster(mSQLiteDatabase);
+        mDaoSession = mDaoMaster.newSession();
+        mFoodDao = mDaoSession.getFoodDao();
+    }
+
+    private StoredFragment selectFragment(int position) {
+        StoredFragment baseFragment = null;
+
+        switch (position) {
+
+            case SEARCH:
+                baseFragment = new StoredFragment();
+                break;
+            case STORED:
+                baseFragment = new StoredFragment();
+                break;
+            default:
+                break;
+        }
+        baseFragment.setFoodDao(mFoodDao);
+        return baseFragment;
+    }
+
+    private void openFragment(BaseFragment baseFragment) {
+        if (baseFragment != null) {
+            FragmentManager fragmentManager = getFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+            fragmentTransaction.replace(R.id.fragment_main, baseFragment);
+            // fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+            if (baseFragment.getTitleResourceId() > 0)
+                mCurrentTitle = baseFragment.getTitleResourceId();
+
+        }
+    }
+
+    public static final String[] options = {
+            "Search", "Stored"
+    };
+
+    private void _initMenu() {
+        mDrawerList = (ListView) findViewById(R.id.drawer);
+
+        if (mDrawerList != null) {
+            mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, options));
+
+            mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        }
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(BUNDLE_SELECTEDFRAGMENT, mSelectedFragment);
     }
 
     private void downloadData() {
@@ -86,8 +279,10 @@ public class SearchActivity extends ListActivity {
                     JSONObject quizObject = (JSONObject) response.get("response");
                     String list = quizObject.optString("list");
                     mSearchResultList = JsonHelper.deserializeFoodList(list);
-                    FoodItemAdapter adapter = new FoodItemAdapter(SearchActivity.this, mSearchResultList);
-                    setListAdapter(adapter);
+                    mBaseFragment.initCards(mSearchResultList);
+                    // FoodItemAdapter adapter = new
+                    // FoodItemAdapter(SearchActivity.this, mSearchResultList);
+                    // setListAdapter(adapter);
                 } catch (JSONException e) {
                     Log.e("e", "", e);
                 }
@@ -101,14 +296,6 @@ public class SearchActivity extends ListActivity {
             }
         });
         queue.add(jsObjRequest);
-    }
-
-    private void initializeDao() {
-        DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
-        mSQLiteDatabase = helper.getWritableDatabase();
-        mDaoMaster = new DaoMaster(mSQLiteDatabase);
-        mDaoSession = mDaoMaster.newSession();
-        mFoodDao = mDaoSession.getFoodDao();
     }
 
     @Override
