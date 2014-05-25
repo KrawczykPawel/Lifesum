@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
  * Entity mapped to table FOOD.
  */
 public class Food {
+
     @SerializedName("id")
     private Long id;
 
@@ -96,6 +97,10 @@ public class Food {
     private Float potassium;
 
     public Food() {
+    }
+
+    public Food(Long id) {
+        this.id = id;
     }
 
     public Food(Long id, Integer categoryid, Float fiber, String headimage, String pcsingram, String brand, Float unsaturatedfat, Float fat,

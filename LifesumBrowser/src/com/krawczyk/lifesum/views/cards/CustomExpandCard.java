@@ -16,7 +16,7 @@
  *  *****************************************************************************
  */
 
-package com.krawczyk.lifesum.views.adapters;
+package com.krawczyk.lifesum.views.cards;
 
 import it.gmariotti.cardslib.library.internal.CardExpand;
 import android.content.Context;

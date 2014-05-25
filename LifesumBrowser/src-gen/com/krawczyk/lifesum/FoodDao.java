@@ -15,7 +15,7 @@ import com.krawczyk.lifesum.Food;
 /**
  * DAO for table FOOD.
  */
-public class FoodDao extends AbstractDao<Food, Void> {
+public class FoodDao extends AbstractDao<Food, Long> {
 
     public static final String TABLENAME = "FOOD";
 
@@ -24,7 +24,7 @@ public class FoodDao extends AbstractDao<Food, Void> {
      * Can be used for QueryBuilder and for referencing column names.
      */
     public static class Properties {
-        public final static Property Id = new Property(0, Long.class, "id", false, "ID");
+        public final static Property Id = new Property(0, Long.class, "id", true, "ID");
 
         public final static Property Categoryid = new Property(1, Integer.class, "categoryid", false, "CATEGORYID");
 
@@ -95,7 +95,7 @@ public class FoodDao extends AbstractDao<Food, Void> {
     public static void createTable(SQLiteDatabase db, boolean ifNotExists) {
         String constraint = ifNotExists ? "IF NOT EXISTS " : "";
         db.execSQL("CREATE TABLE " + constraint + "'FOOD' (" + //
-                "'ID' INTEGER," + // 0: id
+                "'ID' INTEGER PRIMARY KEY ," + // 0: id
                 "'CATEGORYID' INTEGER," + // 1: categoryid
                 "'FIBER' REAL," + // 2: fiber
                 "'HEADIMAGE' TEXT," + // 3: headimage
@@ -285,8 +285,8 @@ public class FoodDao extends AbstractDao<Food, Void> {
 
     /** @inheritdoc */
     @Override
-    public Void readKey(Cursor cursor, int offset) {
-        return null;
+    public Long readKey(Cursor cursor, int offset) {
+        return cursor.isNull(offset + 0) ? null : cursor.getLong(offset + 0);
     }
 
     /** @inheritdoc */
@@ -362,15 +362,19 @@ public class FoodDao extends AbstractDao<Food, Void> {
 
     /** @inheritdoc */
     @Override
-    protected Void updateKeyAfterInsert(Food entity, long rowId) {
-        // Unsupported or missing PK type
-        return null;
+    protected Long updateKeyAfterInsert(Food entity, long rowId) {
+        entity.setId(rowId);
+        return rowId;
     }
 
     /** @inheritdoc */
     @Override
-    public Void getKey(Food entity) {
-        return null;
+    public Long getKey(Food entity) {
+        if (entity != null) {
+            return entity.getId();
+        } else {
+            return null;
+        }
     }
 
     /** @inheritdoc */

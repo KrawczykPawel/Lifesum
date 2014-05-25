@@ -54,8 +54,9 @@ import com.krawczyk.lifesum.FoodDao;
 import com.krawczyk.lifesum.R;
 import com.krawczyk.lifesum.network.JsonHelper;
 import com.krawczyk.lifesum.network.TokenRequest;
-import com.krawczyk.lifesum.views.adapters.BaseFragment;
-import com.krawczyk.lifesum.views.adapters.StoredFragment;
+import com.krawczyk.lifesum.views.fragments.BaseFragment;
+import com.krawczyk.lifesum.views.fragments.SearchFragment;
+import com.krawczyk.lifesum.views.fragments.StoredFragment;
 
 /**
  * @class SearchActivity
@@ -76,7 +77,7 @@ public class SearchActivity extends Activity {
 
     private int mSelectedFragment;
 
-    private StoredFragment mBaseFragment;
+    private BaseFragment mBaseFragment;
 
     protected ActionMode mActionMode;
 
@@ -119,7 +120,7 @@ public class SearchActivity extends Activity {
             // if (mBaseFragment==null)
             // mBaseFragment = selectFragment(mSelectedFragment);
         } else {
-            mBaseFragment = new StoredFragment();
+            mBaseFragment = new SearchFragment();
             mBaseFragment.setFoodDao(mFoodDao);
             openFragment(mBaseFragment);
         }
@@ -212,13 +213,13 @@ public class SearchActivity extends Activity {
         mFoodDao = mDaoSession.getFoodDao();
     }
 
-    private StoredFragment selectFragment(int position) {
-        StoredFragment baseFragment = null;
+    private BaseFragment selectFragment(int position) {
+        BaseFragment baseFragment = null;
 
         switch (position) {
 
             case SEARCH:
-                baseFragment = new StoredFragment();
+                baseFragment = new SearchFragment();
                 break;
             case STORED:
                 baseFragment = new StoredFragment();

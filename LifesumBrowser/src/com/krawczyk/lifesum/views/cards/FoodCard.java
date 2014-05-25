@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.krawczyk.lifesum.views.adapters;
+package com.krawczyk.lifesum.views.cards;
 
 import it.gmariotti.cardslib.library.internal.Card;
 import it.gmariotti.cardslib.library.internal.CardThumbnail;
