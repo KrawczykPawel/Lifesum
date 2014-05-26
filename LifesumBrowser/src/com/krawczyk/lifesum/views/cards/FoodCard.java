@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 The Andrino Project
+ * Copyright (C) 2014 Pawel Krawczyk
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ import com.krawczyk.lifesum.R;
 /**
  * @class FoodCard
  * @author Pawel Krawczyk
- * @since 25-05-2014
+ * @since 25-05-2014 Card for presenting food data on the list.
  */
 public class FoodCard extends Card {
 
@@ -41,19 +41,17 @@ public class FoodCard extends Card {
 
     protected TextView mThirdTitle;
 
-    protected int resourceIdThumbnail;
+    protected int mResourceIdThumbnail;
 
-    protected int count;
+    protected int mCount;
 
-    protected String title;
+    protected String mTitleString;
 
-    protected String secondaryTitle;
+    protected String mSecondaryTitleString;
 
-    protected String thirdTitle;
+    protected String mThirdTitleString;
 
-    protected float rating;
-
-    private Food item;
+    private Food mFood;
 
     public FoodCard(Context context) {
         this(context, R.layout.food_item);
@@ -64,15 +62,19 @@ public class FoodCard extends Card {
         // init();
     }
 
+    /*
+     * Initialize food card by adding thumbnail and swipe listeners with
+     * actions.
+     */
     public void init(final FoodDao foodDao) {
 
         // Add thumbnail
         CardThumbnail cardThumbnail = new CardThumbnail(mContext);
 
-        if (resourceIdThumbnail == 0)
+        if (mResourceIdThumbnail == 0)
             cardThumbnail.setDrawableResource(R.drawable.ic_std_launcher);
         else {
-            cardThumbnail.setDrawableResource(resourceIdThumbnail);
+            cardThumbnail.setDrawableResource(mResourceIdThumbnail);
         }
 
         addCardThumbnail(cardThumbnail);
@@ -82,8 +84,9 @@ public class FoodCard extends Card {
         setOnSwipeListener(new OnSwipeListener() {
             @Override
             public void onSwipe(Card card) {
-                Toast.makeText(getContext(), "Saved food to db= " + title, Toast.LENGTH_SHORT).show();
-                foodDao.insert(item);
+                // Save food to db
+                Toast.makeText(getContext(), "Saved food to db= " + mTitleString, Toast.LENGTH_SHORT).show();
+                foodDao.insert(mFood);
 
             }
         });
@@ -91,8 +94,9 @@ public class FoodCard extends Card {
         setOnUndoSwipeListListener(new OnUndoSwipeListListener() {
             @Override
             public void onUndoSwipe(Card card) {
-                Toast.makeText(getContext(), "Undo food save= " + title, Toast.LENGTH_SHORT).show();
-                foodDao.delete(item);
+                // Delete food from db
+                Toast.makeText(getContext(), "Undo food save= " + mTitleString, Toast.LENGTH_SHORT).show();
+                foodDao.delete(mFood);
             }
         });
 
@@ -107,54 +111,54 @@ public class FoodCard extends Card {
         mThirdTitle = (TextView) parent.findViewById(R.id.carddemo_myapps_main_inner_thirdTitle);
 
         if (mTitle != null)
-            mTitle.setText(title);
+            mTitle.setText(mTitleString);
 
         if (mSecondaryTitle != null)
-            mSecondaryTitle.setText(secondaryTitle);
+            mSecondaryTitle.setText(mSecondaryTitleString);
         if (mThirdTitle != null)
-            mThirdTitle.setText(thirdTitle);
+            mThirdTitle.setText(mThirdTitleString);
 
     }
 
     public Food getItem() {
-        return item;
+        return mFood;
     }
 
     public void setItem(Food item) {
-        this.item = item;
+        this.mFood = item;
     }
 
     @Override
     public String getTitle() {
-        return title;
+        return mTitleString;
     }
 
     @Override
     public void setTitle(String title) {
-        this.title = title;
+        this.mTitleString = title;
     }
 
     public String getSecondaryTitle() {
-        return secondaryTitle;
+        return mSecondaryTitleString;
     }
 
     public String getThirdTitle() {
-        return thirdTitle;
+        return mThirdTitleString;
     }
 
     public void setThirdTitle(String thirdTitle) {
-        this.thirdTitle = thirdTitle;
+        this.mThirdTitleString = thirdTitle;
     }
 
     public void setSecondaryTitle(String secondaryTitle) {
-        this.secondaryTitle = secondaryTitle;
+        this.mSecondaryTitleString = secondaryTitle;
     }
 
     public int getResourceIdThumbnail() {
-        return resourceIdThumbnail;
+        return mResourceIdThumbnail;
     }
 
     public void setResourceIdThumbnail(int resourceIdThumbnail) {
-        this.resourceIdThumbnail = resourceIdThumbnail;
+        this.mResourceIdThumbnail = resourceIdThumbnail;
     }
 }

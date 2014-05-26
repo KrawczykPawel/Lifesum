@@ -32,7 +32,6 @@ import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.util.Log;
-import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -63,11 +62,16 @@ import com.krawczyk.lifesum.views.fragments.SearchFragment;
 import com.krawczyk.lifesum.views.fragments.StoredFragment;
 
 /**
- * @class SearchActivity
+ * @class MainActivity
  * @author Pawel Krawczyk
- * @since 22-05-2014
+ * @since 22-05-2014 General activity of application.
  */
-public class SearchActivity extends Activity {
+public class MainActivity extends Activity {
+
+    /**
+     *
+     */
+    private static final String DOUBLE_QUOTE = "\"";
 
     private static final String LIFESUM_TAG = "Lifesum";
 
@@ -86,8 +90,6 @@ public class SearchActivity extends Activity {
     private int mSelectedFragment;
 
     private BaseFragment mBaseFragment;
-
-    protected ActionMode mActionMode;
 
     private SQLiteDatabase mSQLiteDatabase;
 
@@ -112,19 +114,7 @@ public class SearchActivity extends Activity {
         getActionBar().setHomeButtonEnabled(true);
         initializeDao();
         initNavigationDrawer();
-        if (savedInstanceState != null) {
-            mSelectedFragment = savedInstanceState.getInt(BUNDLE_SELECTEDFRAGMENT);
-
-            FragmentManager fragmentManager = getFragmentManager();
-            if (fragmentManager.findFragmentById(R.id.fragment_main) == null) {
-                mBaseFragment = selectFragment(mSelectedFragment);
-                mBaseFragment.setFoodDao(mFoodDao);
-            }
-        } else {
-            mBaseFragment = new SearchFragment();
-            mBaseFragment.setFoodDao(mFoodDao);
-            openFragment(mBaseFragment);
-        }
+        loadFragment(savedInstanceState);
     }
 
     @Override
@@ -160,7 +150,6 @@ public class SearchActivity extends Activity {
         searchView.setQueryHint(getString(R.string.search_hint));
         menu.add(Menu.NONE, Menu.NONE, 1, getString(R.string.search_hint)).setIcon(R.drawable.ic_action_search).setActionView(searchView)
                 .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-
         searchView.setOnQueryTextListener(new OnQueryTextListener() {
             @Override
             public boolean onQueryTextChange(String newText) {
@@ -174,7 +163,7 @@ public class SearchActivity extends Activity {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 if (query.length() > 0) {
-                    // Search
+                    // Search and hide keyboard
                     InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
                     Toast.makeText(getBaseContext(), getString(R.string.search_progress), Toast.LENGTH_SHORT).show();
@@ -211,6 +200,30 @@ public class SearchActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
+    /*
+     * Load fragment from saved instance state or SearchFragment by default
+     */
+    private void loadFragment(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            mSelectedFragment = savedInstanceState.getInt(BUNDLE_SELECTEDFRAGMENT);
+            FragmentManager fragmentManager = getFragmentManager();
+            if (fragmentManager.findFragmentById(R.id.fragment_main) == null) {
+                mBaseFragment = selectFragment(mSelectedFragment);
+                mBaseFragment.setFoodDao(mFoodDao);
+            }
+        } else {
+            mBaseFragment = new SearchFragment();
+            mBaseFragment.setFoodDao(mFoodDao);
+            openFragment(mBaseFragment);
+        }
+    }
+
+    /**
+     * Initialize ORM system -> open database and create Dao objects. See link
+     * for more.
+     * 
+     * @link http://greendao-orm.com/
+     */
     private void initializeDao() {
         DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
         mSQLiteDatabase = helper.getWritableDatabase();
@@ -219,6 +232,9 @@ public class SearchActivity extends Activity {
         mFoodDao = mDaoSession.getFoodDao();
     }
 
+    /*
+     * Fragment selector for navigation drawer
+     */
     private BaseFragment selectFragment(int position) {
         BaseFragment baseFragment = null;
         switch (position) {
@@ -235,6 +251,9 @@ public class SearchActivity extends Activity {
         return baseFragment;
     }
 
+    /*
+     * Opening selected fragment
+     */
     private void openFragment(BaseFragment baseFragment) {
         if (baseFragment != null) {
             FragmentManager fragmentManager = getFragmentManager();
@@ -248,11 +267,30 @@ public class SearchActivity extends Activity {
         }
     }
 
+    /*
+     * Static array of navigation drawer's titles.
+     */
     private static final String[] options = {
             Lifesum.getApplication().getString(R.string.fragment_search), Lifesum.getApplication().getString(R.string.fragment_stored)
     };
 
-    private void _initMenu() {
+    /*
+     * Initialize navigation drawer with shadow and custom action bar drawer
+     * toggle. Custom drawer listener set.
+     */
+    private void initNavigationDrawer() {
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        initNavigationDrawerList();
+        mDrawerToggle = new CustomActionBarDrawerToggle(this, mDrawer);
+        mDrawer.setDrawerListener(mDrawerToggle);
+    }
+
+    /*
+     * Initialize navigation drawer list with simple item adapter and values.
+     * Custom on click listener set.
+     */
+    private void initNavigationDrawerList() {
         mDrawerList = (ListView) findViewById(R.id.drawer);
         if (mDrawerList != null) {
             mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, options));
@@ -260,6 +298,9 @@ public class SearchActivity extends Activity {
         }
     }
 
+    /*
+     * Search indeterminate progress bar switch.
+     */
     private void refreshLoading(boolean isLoading) {
         if (isLoading == true) {
             findViewById(R.id.progress).setVisibility(View.VISIBLE);
@@ -268,30 +309,41 @@ public class SearchActivity extends Activity {
         }
     }
 
+    /**
+     * Search in Lifesum api with given query.
+     */
     private void search(String query) {
         Log.i(LIFESUM_TAG, "Search started for query: " + query);
         refreshLoading(true);
         downloadData(query);
     }
 
+    /*
+     * Downloading data using Volley request queue from Lifesum endpoint with
+     * given query. Handling both correct response and error response.
+     */
     private void downloadData(String query) {
         RequestQueue queue = Volley.newRequestQueue(this);
-        String url = ENDPOINT_URL + "\"" + query + "\"";
+        String url = ENDPOINT_URL + DOUBLE_QUOTE + query + DOUBLE_QUOTE;
         TokenRequest jsObjRequest = new TokenRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
-                Log.i(LIFESUM_TAG, response.toString());
+                Log.i(LIFESUM_TAG, "Volley response: " + response.toString());
                 try {
+                    // Retrieving response tag value from json
                     JSONObject quizObject = (JSONObject) response.get("response");
                     String list = quizObject.optString("list");
+                    // Deserializng json into food objects list using Gson
+                    // library
                     mSearchResultList = JsonHelper.deserializeFoodList(list);
                     mBaseFragment.initCards(mSearchResultList);
+                    // Standard adapter, before card were introduced
                     // FoodItemAdapter adapter = new
                     // FoodItemAdapter(SearchActivity.this, mSearchResultList);
                     // setListAdapter(adapter);
                 } catch (JSONException e) {
-                    Log.e("e", "", e);
+                    Log.e(LIFESUM_TAG, "JSONException", e);
                 }
                 refreshLoading(false);
             }
@@ -303,17 +355,13 @@ public class SearchActivity extends Activity {
                 refreshLoading(false);
             }
         });
+        // Adding request to the queue
         queue.add(jsObjRequest);
     }
 
-    private void initNavigationDrawer() {
-        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        _initMenu();
-        mDrawerToggle = new CustomActionBarDrawerToggle(this, mDrawer);
-        mDrawer.setDrawerListener(mDrawerToggle);
-    }
-
+    /*
+     * Action bar toggle drawer with changing fragment title
+     */
     private class CustomActionBarDrawerToggle extends ActionBarDrawerToggle {
 
         public CustomActionBarDrawerToggle(Activity mActivity, DrawerLayout mDrawerLayout) {
@@ -333,6 +381,9 @@ public class SearchActivity extends Activity {
         }
     }
 
+    /*
+     * Drawer item click listener
+     */
     private class DrawerItemClickListener implements ListView.OnItemClickListener {
 
         @Override

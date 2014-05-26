@@ -26,21 +26,34 @@ import com.krawczyk.lifesum.Food;
 /**
  * @class JsonHelper
  * @author Pawel Krawczyk
- * @since 23-05-2014
+ * @since 23-05-2014 Helper class for handling Jsons.
  */
 public class JsonHelper {
 
+    /*
+     * Private constructor in order to avoid creating this class. Static use
+     * only.
+     */
     private JsonHelper() {
     }
 
+    /*
+     * Serialize java object into Json string
+     */
     public static String serialize(Object object) {
         return new Gson().toJson(object);
     }
 
+    /*
+     * Deserialize Json string into java object with target class.
+     */
     public static <T> Object deserialize(String jsonStr, Class<?> targetClass) {
         return new Gson().fromJson(jsonStr, targetClass);
     }
 
+    /*
+     * Deserialize Json string into list of Food objects
+     */
     @SuppressWarnings("unchecked")
     public static List<Food> deserializeFoodList(String jsonStr) {
         Type t = new TypeToken<List<Food>>() {

@@ -29,7 +29,8 @@ import com.android.volley.toolbox.JsonObjectRequest;
 /**
  * @class TokenRequest
  * @author Pawel Krawczyk
- * @since 22-05-2014
+ * @since 22-05-2014 Get request with authorization token, in order to use
+ *        Lifesum endpoint.
  */
 public class TokenRequest extends JsonObjectRequest {
     public TokenRequest(int method, String url, JSONObject jsonRequest, Listener<JSONObject> listener, ErrorListener errorListener) {
@@ -39,15 +40,14 @@ public class TokenRequest extends JsonObjectRequest {
     @Override
     protected Map<String, String> getParams() throws AuthFailureError {
         Map<String, String> params = new HashMap<String, String>();
-        // params.put("grant_type", "client_credentials");
         return params;
     }
 
     @Override
     public Map<String, String> getHeaders() throws AuthFailureError {
         HashMap<String, String> params = new HashMap<String, String>();
-        String creds = "a794ecd348a3f71894426c65c37fea35da89a295bcbad687ca68a96fbfc7d371";
-        params.put("Authorization", creds);// Base64.encodeToString(creds.getBytes(),
+        String token = "a794ecd348a3f71894426c65c37fea35da89a295bcbad687ca68a96fbfc7d371";
+        params.put("Authorization", token);// Base64.encodeToString(creds.getBytes(),
                                            // Base64.NO_WRAP));
         return params;
     }

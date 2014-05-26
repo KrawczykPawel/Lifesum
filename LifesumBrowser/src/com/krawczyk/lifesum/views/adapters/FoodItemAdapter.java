@@ -31,7 +31,7 @@ import com.krawczyk.lifesum.R;
 /**
  * @class FoodItemAdapter
  * @author Pawel Krawczyk
- * @since 23-05-2014
+ * @since 23-05-2014 Classic food item adater for simple list view.
  */
 public class FoodItemAdapter extends BaseAdapter {
     private static List<Food> mList;
@@ -80,6 +80,9 @@ public class FoodItemAdapter extends BaseAdapter {
         return convertView;
     }
 
+    /*
+     * View holder
+     */
     private static class ViewHolder {
         TextView mName;
 

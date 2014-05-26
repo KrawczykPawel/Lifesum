@@ -1,8 +1,3 @@
-
-package com.krawczyk.lifesum;
-
-import android.app.Application;
-
 /*
  * Copyright (C) 2014 Pawel Krawczyk
  *
@@ -19,10 +14,15 @@ import android.app.Application;
  * the License.
  */
 
+package com.krawczyk.lifesum;
+
+import android.app.Application;
+
 /**
  * @class Lifesum
  * @author Pawel Krawczyk
- * @since 23-05-2014
+ * @since 23-05-2014 Application class, which provides context in whole
+ *        application.
  */
 public class Lifesum extends Application {
     private static Application sApplication;

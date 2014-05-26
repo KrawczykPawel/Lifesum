@@ -1,19 +1,17 @@
 /*
- * ******************************************************************************
- *   Copyright (c) 2013-2014 Gabriele Mariotti.
+ * Copyright (C) 2014 Pawel Krawczyk
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *  *****************************************************************************
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 package com.krawczyk.lifesum.views.fragments;
@@ -40,6 +38,11 @@ import com.krawczyk.lifesum.R;
 import com.krawczyk.lifesum.views.cards.CustomExpandCard;
 import com.krawczyk.lifesum.views.cards.FoodCard;
 
+/**
+ * @class BaseFragment
+ * @author Pawel Krawczyk
+ * @since 25-05-2014 Abstract class for creating fragment with food card list.
+ */
 public abstract class BaseFragment extends Fragment {
     protected FoodDao mFoodDao;
 
@@ -87,6 +90,10 @@ public abstract class BaseFragment extends Fragment {
         mFoodDao = foodDao;
     }
 
+    /*
+     * Create and initialize food card with header, expand and food attributes
+     * content.
+     */
     protected FoodCard createFoodCard(Food item) {
         CardHeader header = new CardHeader(getActivity());
         CustomExpandCard expand = new CustomExpandCard(getActivity());
@@ -106,10 +113,13 @@ public abstract class BaseFragment extends Fragment {
         return card;
     }
 
+    /*
+     * Populate card list form given array of cards.
+     */
     protected void populateCardList(ArrayList<Card> cards) {
         mCardArrayAdapter = new CardArrayAdapter(getActivity(), cards);
 
-        // Enable undo controller!
+        // Enable undo controller for swipe actions!
         mCardArrayAdapter.setEnableUndo(false);
 
         // CardListView listView = (CardListView)
@@ -119,5 +129,8 @@ public abstract class BaseFragment extends Fragment {
         }
     }
 
+    /*
+     * This method should be implemented in order to create card data.
+     */
     public abstract void initCards(List<Food> foodItems);
 }
