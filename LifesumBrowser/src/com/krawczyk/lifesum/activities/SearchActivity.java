@@ -16,8 +16,6 @@
 
 package com.krawczyk.lifesum.activities;
 
-import it.gmariotti.cardslib.demo.Utils;
-
 import java.util.List;
 
 import org.json.JSONException;
@@ -26,6 +24,7 @@ import org.json.JSONObject;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -37,9 +36,13 @@ import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.SearchView;
+import android.widget.SearchView.OnQueryTextListener;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -51,6 +54,7 @@ import com.krawczyk.lifesum.DaoMaster.DevOpenHelper;
 import com.krawczyk.lifesum.DaoSession;
 import com.krawczyk.lifesum.Food;
 import com.krawczyk.lifesum.FoodDao;
+import com.krawczyk.lifesum.Lifesum;
 import com.krawczyk.lifesum.R;
 import com.krawczyk.lifesum.network.JsonHelper;
 import com.krawczyk.lifesum.network.TokenRequest;
@@ -64,6 +68,10 @@ import com.krawczyk.lifesum.views.fragments.StoredFragment;
  * @since 22-05-2014
  */
 public class SearchActivity extends Activity {
+
+    private static final String LIFESUM_TAG = "Lifesum";
+
+    private static final String ENDPOINT_URL = "https://api.lifesum.com/v1/search/query?type=food&search=";
 
     private List<Food> mSearchResultList;
 
@@ -80,8 +88,6 @@ public class SearchActivity extends Activity {
     private BaseFragment mBaseFragment;
 
     protected ActionMode mActionMode;
-
-    private static String TAG = "Lifesum";
 
     private SQLiteDatabase mSQLiteDatabase;
 
@@ -105,20 +111,15 @@ public class SearchActivity extends Activity {
         getActionBar().setDisplayHomeAsUpEnabled(true);
         getActionBar().setHomeButtonEnabled(true);
         initializeDao();
-        addUiListeners();
-        downloadData();
         initNavigationDrawer();
         if (savedInstanceState != null) {
             mSelectedFragment = savedInstanceState.getInt(BUNDLE_SELECTEDFRAGMENT);
 
             FragmentManager fragmentManager = getFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             if (fragmentManager.findFragmentById(R.id.fragment_main) == null) {
                 mBaseFragment = selectFragment(mSelectedFragment);
                 mBaseFragment.setFoodDao(mFoodDao);
             }
-            // if (mBaseFragment==null)
-            // mBaseFragment = selectFragment(mSelectedFragment);
         } else {
             mBaseFragment = new SearchFragment();
             mBaseFragment.setFoodDao(mFoodDao);
@@ -126,12 +127,10 @@ public class SearchActivity extends Activity {
         }
     }
 
-    private void initNavigationDrawer() {
-        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        _initMenu();
-        mDrawerToggle = new CustomActionBarDrawerToggle(this, mDrawer);
-        mDrawer.setDrawerListener(mDrawerToggle);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshLoading(false);
     }
 
     @Override
@@ -142,9 +141,53 @@ public class SearchActivity extends Activity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(BUNDLE_SELECTEDFRAGMENT, mSelectedFragment);
+    }
+
+    @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         mDrawerToggle.onConfigurationChanged(newConfig);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        // Create the search view
+        final SearchView searchView = new SearchView(getActionBar().getThemedContext());
+        searchView.setQueryHint(getString(R.string.search_hint));
+        menu.add(Menu.NONE, Menu.NONE, 1, getString(R.string.search_hint)).setIcon(R.drawable.ic_action_search).setActionView(searchView)
+                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+
+        searchView.setOnQueryTextListener(new OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if (newText.length() > 0) {
+                    // Search
+                    search(newText);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (query.length() > 0) {
+                    // Search
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+                    Toast.makeText(getBaseContext(), getString(R.string.search_progress), Toast.LENGTH_SHORT).show();
+                    search(query);
+                } else {
+                    // Do something when there's no input
+                    Toast.makeText(getBaseContext(), getString(R.string.search_error), Toast.LENGTH_SHORT).show();
+                }
+                return false;
+            }
+
+        });
+        return true;
     }
 
     /* Called whenever we call invalidateOptionsMenu() */
@@ -166,6 +209,110 @@ public class SearchActivity extends Activity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void initializeDao() {
+        DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
+        mSQLiteDatabase = helper.getWritableDatabase();
+        mDaoMaster = new DaoMaster(mSQLiteDatabase);
+        mDaoSession = mDaoMaster.newSession();
+        mFoodDao = mDaoSession.getFoodDao();
+    }
+
+    private BaseFragment selectFragment(int position) {
+        BaseFragment baseFragment = null;
+        switch (position) {
+            case SEARCH:
+                baseFragment = new SearchFragment();
+                break;
+            case STORED:
+                baseFragment = new StoredFragment();
+                refreshLoading(false);
+                break;
+            default:
+                break;
+        }
+        baseFragment.setFoodDao(mFoodDao);
+        return baseFragment;
+    }
+
+    private void openFragment(BaseFragment baseFragment) {
+        if (baseFragment != null) {
+            FragmentManager fragmentManager = getFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.fragment_main, baseFragment);
+            // fragmentTransaction.addToBackStack(null);
+            fragmentTransaction.commit();
+            if (baseFragment.getTitleResourceId() > 0) {
+                mCurrentTitle = baseFragment.getTitleResourceId();
+            }
+        }
+    }
+
+    private static final String[] options = {
+            Lifesum.getApplication().getString(R.string.fragment_search), Lifesum.getApplication().getString(R.string.fragment_stored)
+    };
+
+    private void _initMenu() {
+        mDrawerList = (ListView) findViewById(R.id.drawer);
+        if (mDrawerList != null) {
+            mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, options));
+            mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        }
+    }
+
+    private void refreshLoading(boolean isLoading) {
+        if (isLoading == true) {
+            findViewById(R.id.progress).setVisibility(View.VISIBLE);
+        } else {
+            findViewById(R.id.progress).setVisibility(View.GONE);
+        }
+    }
+
+    private void search(String query) {
+        Log.i(LIFESUM_TAG, "Search started for query: " + query);
+        refreshLoading(true);
+        downloadData(query);
+    }
+
+    private void downloadData(String query) {
+        RequestQueue queue = Volley.newRequestQueue(this);
+        String url = ENDPOINT_URL + "\"" + query + "\"";
+        TokenRequest jsObjRequest = new TokenRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.i(LIFESUM_TAG, response.toString());
+                try {
+                    JSONObject quizObject = (JSONObject) response.get("response");
+                    String list = quizObject.optString("list");
+                    mSearchResultList = JsonHelper.deserializeFoodList(list);
+                    mBaseFragment.initCards(mSearchResultList);
+                    // FoodItemAdapter adapter = new
+                    // FoodItemAdapter(SearchActivity.this, mSearchResultList);
+                    // setListAdapter(adapter);
+                } catch (JSONException e) {
+                    Log.e("e", "", e);
+                }
+                refreshLoading(false);
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.i(LIFESUM_TAG, error.getMessage());
+                refreshLoading(false);
+            }
+        });
+        queue.add(jsObjRequest);
+    }
+
+    private void initNavigationDrawer() {
+        mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        _initMenu();
+        mDrawerToggle = new CustomActionBarDrawerToggle(this, mDrawer);
+        mDrawer.setDrawerListener(mDrawerToggle);
     }
 
     private class CustomActionBarDrawerToggle extends ActionBarDrawerToggle {
@@ -191,121 +338,17 @@ public class SearchActivity extends Activity {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
             // Highlight the selected item, update the title, and close the
             // drawer
             // update selected item and title, then close the drawer
             mDrawerList.setItemChecked(position, true);
             mBaseFragment = selectFragment(position);
             mSelectedFragment = position;
-
-            if (mBaseFragment != null)
+            if (mBaseFragment != null) {
                 openFragment(mBaseFragment);
+            }
             mDrawer.closeDrawer(mDrawerList);
         }
-    }
-
-    private void initializeDao() {
-        DevOpenHelper helper = new DaoMaster.DevOpenHelper(this, "food-db", null);
-        mSQLiteDatabase = helper.getWritableDatabase();
-        mDaoMaster = new DaoMaster(mSQLiteDatabase);
-        mDaoSession = mDaoMaster.newSession();
-        mFoodDao = mDaoSession.getFoodDao();
-    }
-
-    private BaseFragment selectFragment(int position) {
-        BaseFragment baseFragment = null;
-
-        switch (position) {
-
-            case SEARCH:
-                baseFragment = new SearchFragment();
-                break;
-            case STORED:
-                baseFragment = new StoredFragment();
-                break;
-            default:
-                break;
-        }
-        baseFragment.setFoodDao(mFoodDao);
-        return baseFragment;
-    }
-
-    private void openFragment(BaseFragment baseFragment) {
-        if (baseFragment != null) {
-            FragmentManager fragmentManager = getFragmentManager();
-            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-
-            fragmentTransaction.replace(R.id.fragment_main, baseFragment);
-            // fragmentTransaction.addToBackStack(null);
-            fragmentTransaction.commit();
-            if (baseFragment.getTitleResourceId() > 0)
-                mCurrentTitle = baseFragment.getTitleResourceId();
-
-        }
-    }
-
-    public static final String[] options = {
-            "Search", "Stored"
-    };
-
-    private void _initMenu() {
-        mDrawerList = (ListView) findViewById(R.id.drawer);
-
-        if (mDrawerList != null) {
-            mDrawerList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, options));
-
-            mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-        }
-
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putInt(BUNDLE_SELECTEDFRAGMENT, mSelectedFragment);
-    }
-
-    private void downloadData() {
-        RequestQueue queue = Volley.newRequestQueue(this);
-        String url = "https://api.lifesum.com/v1/search/query?type=food&search=cola";
-
-        TokenRequest jsObjRequest = new TokenRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
-
-            @Override
-            public void onResponse(JSONObject response) {
-                Log.i("Lifesum", response.toString());
-                findViewById(R.id.progressBar1).setVisibility(View.GONE);
-                try {
-                    JSONObject quizObject = (JSONObject) response.get("response");
-                    String list = quizObject.optString("list");
-                    mSearchResultList = JsonHelper.deserializeFoodList(list);
-                    mBaseFragment.initCards(mSearchResultList);
-                    // FoodItemAdapter adapter = new
-                    // FoodItemAdapter(SearchActivity.this, mSearchResultList);
-                    // setListAdapter(adapter);
-                } catch (JSONException e) {
-                    Log.e("e", "", e);
-                }
-            }
-        }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.i("Lifesum", error.getMessage());
-                findViewById(R.id.progressBar1).setVisibility(View.GONE);
-            }
-        });
-        queue.add(jsObjRequest);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    protected void addUiListeners() {
     }
 
 }
