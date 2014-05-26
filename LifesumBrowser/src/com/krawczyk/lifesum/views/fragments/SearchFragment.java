@@ -46,12 +46,6 @@ public class SearchFragment extends BaseFragment {
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        mListView = (CardListView) getActivity().findViewById(R.id.carddemo_list_gplaycard);
-    }
-
-    @Override
     public void initCards(List<Food> foodItems) {
         // Init an array of Cards
         ArrayList<Card> cards = new ArrayList<Card>();

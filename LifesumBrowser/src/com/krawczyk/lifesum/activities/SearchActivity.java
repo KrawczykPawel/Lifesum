@@ -227,7 +227,6 @@ public class SearchActivity extends Activity {
                 break;
             case STORED:
                 baseFragment = new StoredFragment();
-                refreshLoading(false);
                 break;
             default:
                 break;
@@ -300,7 +299,7 @@ public class SearchActivity extends Activity {
 
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.i(LIFESUM_TAG, error.getMessage());
+                Log.i(LIFESUM_TAG, "Volley error: " + error.getMessage());
                 refreshLoading(false);
             }
         });

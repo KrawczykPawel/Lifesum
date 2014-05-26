@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import com.krawczyk.lifesum.Food;
@@ -48,7 +49,6 @@ public class StoredFragment extends BaseFragment {
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mListView = (CardListView) getActivity().findViewById(R.id.carddemo_list_gplaycard);
         initCards(mFoodDao.loadAll());
     }
 
@@ -69,7 +69,7 @@ public class StoredFragment extends BaseFragment {
             card.setOnSwipeListener(new OnSwipeListener() {
                 @Override
                 public void onSwipe(Card card) {
-                    Toast.makeText(getActivity(), "Undo food save= " + item.getTitle(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getActivity(), "Delete food= " + item.getTitle(), Toast.LENGTH_SHORT).show();
                     mFoodDao.delete(item);
                 }
             });

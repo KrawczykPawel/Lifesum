@@ -49,13 +49,15 @@ public abstract class BaseFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.demo_fragment_list_gplaycard_undo, container, false);
+        return inflater.inflate(R.layout.fragment, container, false);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setTitle();
+        mListView = (CardListView) getActivity().findViewById(R.id.carddemo_list_gplaycard);
+        getActivity().findViewById(R.id.progress).setVisibility(View.GONE);
     }
 
     protected void setTitle() {
@@ -108,7 +110,7 @@ public abstract class BaseFragment extends Fragment {
         mCardArrayAdapter = new CardArrayAdapter(getActivity(), cards);
 
         // Enable undo controller!
-        mCardArrayAdapter.setEnableUndo(true);
+        mCardArrayAdapter.setEnableUndo(false);
 
         // CardListView listView = (CardListView)
         // getActivity().findViewById(R.id.carddemo_list_gplaycard);
