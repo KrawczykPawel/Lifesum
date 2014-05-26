@@ -197,9 +197,9 @@ public class FoodDao extends AbstractDao<Food, Long> {
             stmt.bindLong(12, defaultserving);
         }
 
-        Integer mlingram = entity.getMlingram();
+        Float mlingram = entity.getMlingram();
         if (mlingram != null) {
-            stmt.bindLong(13, mlingram);
+            stmt.bindDouble(13, mlingram);
         }
 
         Float saturatedfat = entity.getSaturatedfat();
@@ -305,7 +305,7 @@ public class FoodDao extends AbstractDao<Food, Long> {
                 cursor.isNull(offset + 9) ? null : cursor.getInt(offset + 9), // typeofmeasurement
                 cursor.isNull(offset + 10) ? null : cursor.getFloat(offset + 10), // protein
                 cursor.isNull(offset + 11) ? null : cursor.getInt(offset + 11), // defaultserving
-                cursor.isNull(offset + 12) ? null : cursor.getInt(offset + 12), // mlingram
+                cursor.isNull(offset + 12) ? null : cursor.getFloat(offset + 12), // mlingram
                 cursor.isNull(offset + 13) ? null : cursor.getFloat(offset + 13), // saturatedfat
                 cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14), // category
                 cursor.isNull(offset + 15) ? null : cursor.getShort(offset + 15) != 0, // verified
@@ -341,7 +341,7 @@ public class FoodDao extends AbstractDao<Food, Long> {
         entity.setTypeofmeasurement(cursor.isNull(offset + 9) ? null : cursor.getInt(offset + 9));
         entity.setProtein(cursor.isNull(offset + 10) ? null : cursor.getFloat(offset + 10));
         entity.setDefaultserving(cursor.isNull(offset + 11) ? null : cursor.getInt(offset + 11));
-        entity.setMlingram(cursor.isNull(offset + 12) ? null : cursor.getInt(offset + 12));
+        entity.setMlingram(cursor.isNull(offset + 12) ? null : cursor.getFloat(offset + 12));
         entity.setSaturatedfat(cursor.isNull(offset + 13) ? null : cursor.getFloat(offset + 13));
         entity.setCategory(cursor.isNull(offset + 14) ? null : cursor.getString(offset + 14));
         entity.setVerified(cursor.isNull(offset + 15) ? null : cursor.getShort(offset + 15) != 0);

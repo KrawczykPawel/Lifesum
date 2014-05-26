@@ -56,7 +56,7 @@ public class FoodCard extends Card {
     private Food item;
 
     public FoodCard(Context context) {
-        this(context, R.layout.carddemo_mycard_inner_content);
+        this(context, R.layout.food_item);
     }
 
     public FoodCard(Context context, int innerLayout) {

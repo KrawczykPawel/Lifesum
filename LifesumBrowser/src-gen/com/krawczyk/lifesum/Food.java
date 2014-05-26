@@ -46,7 +46,7 @@ public class Food {
     private Integer defaultserving;
 
     @SerializedName("mlingram")
-    private Integer mlingram;
+    private Float mlingram;
 
     @SerializedName("saturatedfat")
     private Float saturatedfat;
@@ -104,7 +104,7 @@ public class Food {
     }
 
     public Food(Long id, Integer categoryid, Float fiber, String headimage, String pcsingram, String brand, Float unsaturatedfat, Float fat,
-            Integer servingcategory, Integer typeofmeasurement, Float protein, Integer defaultserving, Integer mlingram, Float saturatedfat,
+            Integer servingcategory, Integer typeofmeasurement, Float protein, Integer defaultserving, Float mlingram, Float saturatedfat,
             String category, Boolean verified, String title, String pcstext, Float sodium, Float carbohydrates, Integer showonlysametype,
             Integer calories, Integer serving_version, Float sugar, Integer measurementid, Float cholesterol, Float gramsperserving,
             Integer showmeasurement, Float potassium) {
@@ -235,11 +235,11 @@ public class Food {
         this.defaultserving = defaultserving;
     }
 
-    public Integer getMlingram() {
+    public Float getMlingram() {
         return mlingram;
     }
 
-    public void setMlingram(Integer mlingram) {
+    public void setMlingram(Float mlingram) {
         this.mlingram = mlingram;
     }
 
