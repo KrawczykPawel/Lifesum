@@ -1,30 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
-    <RelativeLayout
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_width="@dimen/progress_bar_size"
+        android:layout_height="@dimen/progress_bar_size"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone" />
+
+    <it.gmariotti.cardslib.library.view.CardListView
+        android:id="@+id/card_list_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" >
-
-        <ProgressBar
-            android:id="@+id/progress"
-            android:layout_width="@dimen/progress_bar_size"
-            android:layout_height="@dimen/progress_bar_size"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentTop="true"
-            />
-
-        <it.gmariotti.cardslib.library.view.CardListView
-            android:id="@+id/carddemo_list_gplaycard"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@id/progress"
-            card:list_card_layout_resourceID="@layout/list_card_thumbnail_layout" />
-    </RelativeLayout>
+        android:layout_height="match_parent"
+        android:layout_above="@id/progress"
+        android:visibility="gone"
+        card:list_card_layout_resourceID="@layout/list_card_thumbnail_layout" />
 
     <!-- Include undo message layout -->
-    <!--<include layout="@layout/list_card_undo_message"/> -->
 
-</FrameLayout>
+    <include
+        android:id="@+id/undo_bar"
+        layout="@layout/list_card_undo_message"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true" />
+
+</RelativeLayout>

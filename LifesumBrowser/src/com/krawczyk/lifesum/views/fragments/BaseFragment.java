@@ -59,7 +59,7 @@ public abstract class BaseFragment extends Fragment {
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         setTitle();
-        mListView = (CardListView) getActivity().findViewById(R.id.carddemo_list_gplaycard);
+        mListView = (CardListView) getActivity().findViewById(R.id.card_list_view);
         getActivity().findViewById(R.id.progress).setVisibility(View.GONE);
     }
 
@@ -106,11 +106,33 @@ public abstract class BaseFragment extends Fragment {
         card.setSecondaryTitle(item.getBrand());
         card.setThirdTitle(item.getCalories() + getString(R.string.kcal));
         card.setId(Long.toString(item.getId()));
-        card.setResourceIdThumbnail(R.drawable.ic_launcher);
+        setThumbnailDrawable(item, card);
         card.addCardHeader(header);
         card.addCardExpand(expand);
         card.init(mFoodDao);
         return card;
+    }
+
+    /*
+     * Set some random icon
+     */
+    private void setThumbnailDrawable(Food item, FoodCard card) {
+        long modulo = item.getId() % 4;
+        int drawable = R.drawable.food;
+        switch (Integer.valueOf((int) modulo)) {
+            case 1:
+                drawable = R.drawable.food2;
+                break;
+            case 2:
+                drawable = R.drawable.food3;
+                break;
+            case 3:
+                drawable = R.drawable.food4;
+                break;
+            default:
+                break;
+        }
+        card.setResourceIdThumbnail(drawable);
     }
 
     /*
@@ -120,13 +142,14 @@ public abstract class BaseFragment extends Fragment {
         mCardArrayAdapter = new CardArrayAdapter(getActivity(), cards);
 
         // Enable undo controller for swipe actions!
-        mCardArrayAdapter.setEnableUndo(false);
-
+        mCardArrayAdapter.setEnableUndo(true);
+        // mCardArrayAdapter.getUndoBarController().hideUndoBar(true);
         // CardListView listView = (CardListView)
         // getActivity().findViewById(R.id.carddemo_list_gplaycard);
         if (mListView != null) {
             mListView.setAdapter(mCardArrayAdapter);
         }
+        mListView.setVisibility(View.VISIBLE);
     }
 
     /*
