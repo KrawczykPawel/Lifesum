@@ -68,9 +68,6 @@ import com.krawczyk.lifesum.views.fragments.StoredFragment;
  */
 public class MainActivity extends Activity {
 
-    /**
-     *
-     */
     private static final String DOUBLE_QUOTE = "\"";
 
     private static final String LIFESUM_TAG = "Lifesum";
@@ -145,37 +142,39 @@ public class MainActivity extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
-        // Create the search view
-        final SearchView searchView = new SearchView(getActionBar().getThemedContext());
-        searchView.setQueryHint(getString(R.string.search_hint));
-        menu.add(Menu.NONE, Menu.NONE, 1, getString(R.string.search_hint)).setIcon(R.drawable.ic_action_search).setActionView(searchView)
-                .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
-        searchView.setOnQueryTextListener(new OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                if (newText.length() > 0) {
-                    // Search
-                    search(newText);
+        if (mBaseFragment instanceof SearchFragment) {
+            // Create the search view
+            final SearchView searchView = new SearchView(getActionBar().getThemedContext());
+            searchView.setQueryHint(getString(R.string.search_hint));
+            menu.add(Menu.NONE, Menu.NONE, 1, getString(R.string.search_hint)).setIcon(R.drawable.ic_action_search).setActionView(searchView)
+                    .setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS | MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+            searchView.setOnQueryTextListener(new OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (newText.length() > 0) {
+                        // Search
+                        search(newText);
+                    }
+                    return false;
                 }
-                return false;
-            }
 
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                if (query.length() > 0) {
-                    // Search and hide keyboard
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
-                    Toast.makeText(getBaseContext(), getString(R.string.search_progress), Toast.LENGTH_SHORT).show();
-                    search(query);
-                } else {
-                    // Do something when there's no input
-                    Toast.makeText(getBaseContext(), getString(R.string.search_error), Toast.LENGTH_SHORT).show();
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    if (query.length() > 0) {
+                        // Search and hide keyboard
+                        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                        imm.hideSoftInputFromWindow(searchView.getWindowToken(), 0);
+                        Toast.makeText(getBaseContext(), getString(R.string.search_progress), Toast.LENGTH_SHORT).show();
+                        search(query);
+                    } else {
+                        // Do something when there's no input
+                        Toast.makeText(getBaseContext(), getString(R.string.search_error), Toast.LENGTH_SHORT).show();
+                    }
+                    return false;
                 }
-                return false;
-            }
 
-        });
+            });
+        }
         return true;
     }
 

@@ -23,7 +23,6 @@ import it.gmariotti.cardslib.library.internal.Card.OnUndoSwipeListListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.view.View;
 import android.widget.Toast;
 
 import com.krawczyk.lifesum.Food;
@@ -52,7 +51,6 @@ public class SearchFragment extends BaseFragment {
             card.setOnSwipeListener(new OnSwipeListener() {
                 @Override
                 public void onSwipe(Card card) {
-                    getActivity().findViewById(R.id.undo_bar).setVisibility(View.VISIBLE);
                     Toast.makeText(getActivity(), "Saved food to db= " + item.getTitle(), Toast.LENGTH_SHORT).show();
                     mFoodDao.insert(item);
 
@@ -61,7 +59,6 @@ public class SearchFragment extends BaseFragment {
             card.setOnUndoSwipeListListener(new OnUndoSwipeListListener() {
                 @Override
                 public void onUndoSwipe(Card card) {
-                    getActivity().findViewById(R.id.undo_bar).setVisibility(View.VISIBLE);
                     Toast.makeText(getActivity(), "Undo food save= " + item.getTitle(), Toast.LENGTH_SHORT).show();
                     mFoodDao.delete(item);
                 }

@@ -22,10 +22,8 @@
 
     <!-- Include undo message layout -->
 
-    <include
-        android:id="@+id/undo_bar"
+    <!--<include
         layout="@layout/list_card_undo_message"
-        android:visibility="gone"
-        android:layout_alignParentBottom="true" />
+        />-->
 
 </RelativeLayout>
